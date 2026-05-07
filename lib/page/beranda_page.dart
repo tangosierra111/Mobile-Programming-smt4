@@ -1,504 +1,820 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
-import '../profile_data.dart';
+import '../pertemuan/pertemuan1.dart';
+import '../pertemuan/pertemuan10.dart';
+import '../pertemuan/pertemuan11.dart';
+import '../pertemuan/pertemuan12.dart';
+import '../pertemuan/pertemuan13.dart';
+import '../pertemuan/pertemuan14.dart';
+import '../pertemuan/pertemuan2.dart';
+import '../pertemuan/pertemuan3.dart';
+import '../pertemuan/pertemuan4.dart';
+import '../pertemuan/pertemuan5.dart';
+import '../pertemuan/pertemuan6.dart';
+import '../pertemuan/pertemuan7.dart';
+import '../pertemuan/pertemuan9.dart';
+
+enum _DashboardViewMode { grid, list }
 
 class BerandaPage extends StatefulWidget {
-  const BerandaPage({
-    super.key,
-    required this.profile,
-    required this.onSave,
-    required this.onDelete,
-    this.onOpenProfile,
-  });
-
-  final ProfileData profile;
-  final ValueChanged<ProfileData> onSave;
-  final VoidCallback onDelete;
-  final VoidCallback? onOpenProfile;
+  const BerandaPage({super.key});
 
   @override
   State<BerandaPage> createState() => _BerandaPageState();
 }
 
 class _BerandaPageState extends State<BerandaPage> {
-  late final TextEditingController _fullNameController;
-  late final TextEditingController _locationController;
-  late final TextEditingController _positionController;
-  late final TextEditingController _professionController;
-  late final TextEditingController _emailController;
-  late final TextEditingController _phoneController;
-  late final TextEditingController _aboutController;
+  _DashboardViewMode _viewMode = _DashboardViewMode.grid;
+  String _searchQuery = '';
+  final Set<int> _completedMeetings = {};
 
-  @override
-  void initState() {
-    super.initState();
-    _fullNameController = TextEditingController();
-    _locationController = TextEditingController();
-    _positionController = TextEditingController();
-    _professionController = TextEditingController();
-    _emailController = TextEditingController();
-    _phoneController = TextEditingController();
-    _aboutController = TextEditingController();
-    _syncControllers(widget.profile);
-  }
+  static const List<_MeetingMenu> _menus = [
+    _MeetingMenu(
+      meetingNumber: 1,
+      title: 'Pertemuan 1',
+      color: Color(0xFF0A66C2),
+      backgroundColor: Color(0xFFEAF4FF),
+    ),
+    _MeetingMenu(
+      meetingNumber: 2,
+      title: 'Pertemuan 2',
+      color: Color(0xFF7C3AED),
+      backgroundColor: Color(0xFFF3E8FF),
+    ),
+    _MeetingMenu(
+      meetingNumber: 3,
+      title: 'Pertemuan 3',
+      color: Color(0xFF0891B2),
+      backgroundColor: Color(0xFFE6F7FB),
+    ),
+    _MeetingMenu(
+      meetingNumber: 4,
+      title: 'Pertemuan 4',
+      color: Color(0xFFDC2626),
+      backgroundColor: Color(0xFFFEE2E2),
+    ),
+    _MeetingMenu(
+      meetingNumber: 5,
+      title: 'Pertemuan 5',
+      color: Color(0xFF1E88E5),
+      backgroundColor: Color(0xFFEAF4FF),
+    ),
+    _MeetingMenu(
+      meetingNumber: 6,
+      title: 'Pertemuan 6',
+      color: Color(0xFF34A853),
+      backgroundColor: Color(0xFFEAF7ED),
+    ),
+    _MeetingMenu(
+      meetingNumber: 7,
+      title: 'Pertemuan 7',
+      color: Color(0xFFF59E0B),
+      backgroundColor: Color(0xFFFFF5E5),
+    ),
+    _MeetingMenu(
+      meetingNumber: 8,
+      title: 'Pertemuan 8',
+      color: Color(0xFF8E24AA),
+      backgroundColor: Color(0xFFF5EAF8),
+    ),
+    _MeetingMenu(
+      meetingNumber: 9,
+      title: 'Pertemuan 9',
+      color: Color(0xFF0F766E),
+      backgroundColor: Color(0xFFE6FFFA),
+    ),
+    _MeetingMenu(
+      meetingNumber: 10,
+      title: 'Pertemuan 10',
+      color: Color(0xFF4338CA),
+      backgroundColor: Color(0xFFEDEBFE),
+    ),
+    _MeetingMenu(
+      meetingNumber: 11,
+      title: 'Pertemuan 11',
+      color: Color(0xFFBE123C),
+      backgroundColor: Color(0xFFFFE4E6),
+    ),
+    _MeetingMenu(
+      meetingNumber: 12,
+      title: 'Pertemuan 12',
+      color: Color(0xFFB45309),
+      backgroundColor: Color(0xFFFEF3C7),
+    ),
+    _MeetingMenu(
+      meetingNumber: 13,
+      title: 'Pertemuan 13',
+      color: Color(0xFF15803D),
+      backgroundColor: Color(0xFFDCFCE7),
+    ),
+    _MeetingMenu(
+      meetingNumber: 14,
+      title: 'Pertemuan 14',
+      color: Color(0xFF6D28D9),
+      backgroundColor: Color(0xFFF3E8FF),
+    ),
+  ];
 
-  @override
-  void didUpdateWidget(covariant BerandaPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.profile != widget.profile) {
-      _syncControllers(widget.profile);
+  List<_MeetingMenu> get _filteredMenus {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      return _menus;
     }
+
+    return _menus.where((menu) => menu.matches(query)).toList();
   }
 
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _locationController.dispose();
-    _positionController.dispose();
-    _professionController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _aboutController.dispose();
-    super.dispose();
+  double get _progressValue {
+    if (_menus.isEmpty) {
+      return 0;
+    }
+
+    return _completedMeetings.length / _menus.length;
   }
 
-  void _syncControllers(ProfileData profile) {
-    _fullNameController.text = profile.fullName;
-    _locationController.text = profile.location;
-    _positionController.text = profile.position;
-    _professionController.text = profile.profession;
-    _emailController.text = profile.email;
-    _phoneController.text = profile.phoneNumber;
-    _aboutController.text = profile.about;
+  void _toggleCompleted(_MeetingMenu menu) {
+    setState(() {
+      if (_completedMeetings.contains(menu.meetingNumber)) {
+        _completedMeetings.remove(menu.meetingNumber);
+      } else {
+        _completedMeetings.add(menu.meetingNumber);
+      }
+    });
   }
 
-  void _showToast(String message, {Color backgroundColor = const Color(0xFF0A66C2)}) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: backgroundColor,
-      textColor: Colors.white,
-      fontSize: 15,
-    );
-  }
+  void _openMeeting(BuildContext context, _MeetingMenu menu) {
+    final Widget? page = switch (menu.meetingNumber) {
+      1 => const Pertemuan1Page(),
+      2 => const Pertemuan2Page(),
+      3 => const Pertemuan3Page(),
+      4 => const Pertemuan4Page(),
+      5 => const Pertemuan5Page(),
+      6 => const Pertemuan6Page(),
+      7 => const Pertemuan7Page(),
+      9 => const Pertemuan9Page(),
+      10 => const Pertemuan10Page(),
+      11 => const Pertemuan11Page(),
+      12 => const Pertemuan12Page(),
+      13 => const Pertemuan13Page(),
+      14 => const Pertemuan14Page(),
+      _ => null,
+    };
 
-  ProfileData _buildProfileFromForm() {
-    return widget.profile.copyWith(
-      fullName: _fullNameController.text.trim(),
-      location: _locationController.text.trim(),
-      position: _positionController.text.trim(),
-      profession: _professionController.text.trim(),
-      email: _emailController.text.trim(),
-      phoneNumber: _phoneController.text.trim(),
-      about: _aboutController.text.trim(),
-    );
-  }
-
-  Future<void> _showAlertDialog(BuildContext context) async {
-    final profile = _buildProfileFromForm();
-    if (profile.fullName.isEmpty ||
-        profile.location.isEmpty ||
-        profile.position.isEmpty ||
-        profile.profession.isEmpty ||
-        profile.email.isEmpty ||
-        profile.phoneNumber.isEmpty ||
-        profile.about.isEmpty) {
-      _showToast(
-        'Lengkapi semua data profil terlebih dahulu',
-        backgroundColor: const Color(0xFFE67E22),
+    if (page != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => _MeetingDetailPage(
+            menu: menu,
+            isCompleted: _completedMeetings.contains(menu.meetingNumber),
+            onToggleCompleted: () => _toggleCompleted(menu),
+            child: page,
+          ),
+        ),
       );
       return;
     }
 
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF4FF),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: const Icon(
-                  Icons.verified_outlined,
-                  color: Color(0xFF0A66C2),
-                  size: 48,
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
-                child: Text(
-                  'Simpan Profil',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 18),
-                child: Text(
-                  'Perubahan ini akan langsung ditampilkan pada halaman profil.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF667085),
-                    height: 1.45,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Batal'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          widget.onSave(profile);
-                          _showToast('Profil berhasil disimpan');
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF0A66C2),
-                        ),
-                        child: const Text('Simpan'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _deleteData() {
-    widget.onDelete();
-    _syncControllers(ProfileData.empty);
-    _showToast(
-      'Data profil berhasil dihapus',
-      backgroundColor: const Color(0xFF667085),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${menu.title} belum tersedia'),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final filteredMenus = _filteredMenus;
+
     return SafeArea(
       top: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 960),
-            child: Column(
-              children: [
-                _buildHeroCard(),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x0A0F172A),
-                        blurRadius: 16,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      _buildSectionTitle(),
-                      const SizedBox(height: 18),
-                      _buildResponsiveFields(
-                        left: _buildTextField(
-                          controller: _fullNameController,
-                          labelText: 'Nama Lengkap',
-                          icon: Icons.badge_outlined,
-                        ),
-                        right: _buildTextField(
-                          controller: _locationController,
-                          labelText: 'Lokasi',
-                          icon: Icons.location_on_outlined,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildResponsiveFields(
-                        left: _buildTextField(
-                          controller: _positionController,
-                          labelText: 'Jabatan',
-                          icon: Icons.work_outline,
-                        ),
-                        right: _buildTextField(
-                          controller: _professionController,
-                          labelText: 'Profesi',
-                          icon: Icons.groups_2_outlined,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildResponsiveFields(
-                        left: _buildTextField(
-                          controller: _emailController,
-                          labelText: 'Email',
-                          icon: Icons.mail_outline,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        right: _buildTextField(
-                          controller: _phoneController,
-                          labelText: 'No. HP',
-                          icon: Icons.phone_outlined,
-                          keyboardType: TextInputType.phone,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildTextField(
-                        controller: _aboutController,
-                        labelText: 'Tentang Saya',
-                        icon: Icons.info_outline,
-                        maxLines: 6,
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: () => _showAlertDialog(context),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF0A66C2),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              icon: const Icon(Icons.save_outlined),
-                              label: const Text(
-                                'Simpan Profil',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _deleteData,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF475467),
-                                side: const BorderSide(color: Color(0xFFD0D5DD)),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              icon: const Icon(Icons.delete_outline),
-                              label: const Text(
-                                'Hapus',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: widget.onOpenProfile,
-                          icon: const Icon(Icons.person_outline),
-                          label: const Text('Lihat hasil di menu Profil'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0A66C2), Color(0xFF378FE9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A0A66C2),
-            blurRadius: 20,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Icon(
-              Icons.person_pin_outlined,
-              size: 36,
-              color: Color(0xFF0A66C2),
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+            child: Row(
               children: [
-                Text(
-                  'Editor Profil Profesional',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Daftar Pertemuan',
+                        style: TextStyle(
+                          color: Color(0xFF111827),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Pilih materi pembelajaran yang ingin dibuka.',
+                        style: TextStyle(
+                          color: Color(0xFF667085),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 6),
-                Text(
-                  'Tampilan dibuat lebih clean dan profesional agar terasa seperti panel pengelola profil LinkedIn.',
-                  style: TextStyle(
-                    color: Color(0xFFEAF4FF),
-                    height: 1.5,
-                    fontSize: 14,
+                const SizedBox(width: 12),
+                SegmentedButton<_DashboardViewMode>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(
+                      value: _DashboardViewMode.grid,
+                      icon: Icon(Icons.grid_view_rounded),
+                      tooltip: 'Grid view',
+                    ),
+                    ButtonSegment(
+                      value: _DashboardViewMode.list,
+                      icon: Icon(Icons.view_list_rounded),
+                      tooltip: 'List view',
+                    ),
+                  ],
+                  selected: {_viewMode},
+                  onSelectionChanged: (selection) {
+                    setState(() {
+                      _viewMode = selection.first;
+                    });
+                  },
+                  style: SegmentedButton.styleFrom(
+                    selectedBackgroundColor: const Color(0xFFEAF4FF),
+                    selectedForegroundColor: const Color(0xFF0A66C2),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEAF4FF),
-            borderRadius: BorderRadius.circular(14),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: _ProgressSummary(
+              completed: _completedMeetings.length,
+              total: _menus.length,
+              progressValue: _progressValue,
+            ),
           ),
-          child: const Icon(Icons.edit_document, color: Color(0xFF0A66C2)),
-        ),
-        const SizedBox(width: 12),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Lengkapi Data Profil',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2937),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Cari materi, contoh: Form, Toast, Pertemuan 6',
+                prefixIcon: const Icon(Icons.search_rounded),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF0A66C2),
+                    width: 1.2,
+                  ),
                 ),
               ),
-              SizedBox(height: 4),
+            ),
+          ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: filteredMenus.isEmpty
+                  ? _EmptySearchResult(
+                      key: ValueKey('empty-search-$_searchQuery'),
+                      query: _searchQuery,
+                    )
+                  : _viewMode == _DashboardViewMode.grid
+                      ? _MeetingGrid(
+                          key: const ValueKey('meeting-grid'),
+                          menus: filteredMenus,
+                          completedMeetings: _completedMeetings,
+                          onOpen: (menu) => _openMeeting(context, menu),
+                          onToggleCompleted: _toggleCompleted,
+                        )
+                      : _MeetingList(
+                          key: const ValueKey('meeting-list'),
+                          menus: filteredMenus,
+                          completedMeetings: _completedMeetings,
+                          onOpen: (menu) => _openMeeting(context, menu),
+                          onToggleCompleted: _toggleCompleted,
+                        ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressSummary extends StatelessWidget {
+  const _ProgressSummary({
+    required this.completed,
+    required this.total,
+    required this.progressValue,
+  });
+
+  final int completed;
+  final int total;
+  final double progressValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (progressValue * 100).round();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A0F172A),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.trending_up_rounded, color: Color(0xFF0A66C2)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Progress Belajar',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
+                ),
+              ),
               Text(
-                'Informasi di bawah ini akan digunakan untuk membentuk tampilan profil yang lebih profesional.',
-                style: TextStyle(
-                  color: Color(0xFF667085),
-                  height: 1.45,
+                '$completed/$total selesai',
+                style: const TextStyle(
+                  color: Color(0xFF0A66C2),
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 9,
+              value: progressValue,
+              backgroundColor: const Color(0xFFEAF4FF),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFF0A66C2)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$percent% materi sudah ditandai selesai.',
+            style: const TextStyle(
+              color: Color(0xFF667085),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptySearchResult extends StatelessWidget {
+  const _EmptySearchResult({
+    super.key,
+    required this.query,
+  });
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      key: key,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.search_off_rounded,
+              color: Color(0xFF98A2B3),
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Materi tidak ditemukan',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Tidak ada hasil untuk "$query".',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF667085),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MeetingGrid extends StatelessWidget {
+  const _MeetingGrid({
+    super.key,
+    required this.menus,
+    required this.completedMeetings,
+    required this.onOpen,
+    required this.onToggleCompleted,
+  });
+
+  final List<_MeetingMenu> menus;
+  final Set<int> completedMeetings;
+  final ValueChanged<_MeetingMenu> onOpen;
+  final ValueChanged<_MeetingMenu> onToggleCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+      itemCount: menus.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 18,
+        crossAxisSpacing: 18,
+        childAspectRatio: 1,
+      ),
+      itemBuilder: (context, index) {
+        final menu = menus[index];
+        return _MeetingCard(
+          menu: menu,
+          isCompleted: completedMeetings.contains(menu.meetingNumber),
+          onTap: () => onOpen(menu),
+          onToggleCompleted: () => onToggleCompleted(menu),
+        );
+      },
+    );
+  }
+}
+
+class _MeetingList extends StatelessWidget {
+  const _MeetingList({
+    super.key,
+    required this.menus,
+    required this.completedMeetings,
+    required this.onOpen,
+    required this.onToggleCompleted,
+  });
+
+  final List<_MeetingMenu> menus;
+  final Set<int> completedMeetings;
+  final ValueChanged<_MeetingMenu> onOpen;
+  final ValueChanged<_MeetingMenu> onToggleCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+      itemCount: menus.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final menu = menus[index];
+        return _MeetingListTile(
+          menu: menu,
+          isCompleted: completedMeetings.contains(menu.meetingNumber),
+          onTap: () => onOpen(menu),
+          onToggleCompleted: () => onToggleCompleted(menu),
+        );
+      },
+    );
+  }
+}
+
+class _MeetingListTile extends StatelessWidget {
+  const _MeetingListTile({
+    required this.menu,
+    required this.isCompleted,
+    required this.onTap,
+    required this.onToggleCompleted,
+  });
+
+  final _MeetingMenu menu;
+  final bool isCompleted;
+  final VoidCallback onTap;
+  final VoidCallback onToggleCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 1.5,
+      shadowColor: const Color(0x12000000),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: menu.backgroundColor,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.menu_book_rounded,
+                  color: menu.color,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      menu.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF111827),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      menu.isAvailable
+                          ? 'Materi tersedia'
+                          : 'Materi belum tersedia',
+                      style: TextStyle(
+                        color: menu.isAvailable
+                            ? const Color(0xFF15803D)
+                            : const Color(0xFF667085),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: menu.color,
+              ),
+              const SizedBox(width: 4),
+              Checkbox(
+                value: isCompleted,
+                activeColor: menu.color,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                onChanged: (_) => onToggleCompleted(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MeetingCard extends StatelessWidget {
+  const _MeetingCard({
+    required this.menu,
+    required this.isCompleted,
+    required this.onTap,
+    required this.onToggleCompleted,
+  });
+
+  final _MeetingMenu menu;
+  final bool isCompleted;
+  final VoidCallback onTap;
+  final VoidCallback onToggleCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 2,
+      shadowColor: const Color(0x16000000),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: menu.backgroundColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.menu_book_rounded,
+                      color: menu.color,
+                      size: 34,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  Text(
+                    menu.title,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    isCompleted ? 'Selesai' : 'Belum selesai',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color:
+                          isCompleted ? const Color(0xFF15803D) : Colors.grey,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                onPressed: onToggleCompleted,
+                tooltip:
+                    isCompleted ? 'Tandai belum selesai' : 'Tandai selesai',
+                style: IconButton.styleFrom(
+                  backgroundColor:
+                      isCompleted ? const Color(0xFFDCFCE7) : Colors.grey[100],
+                ),
+                icon: Icon(
+                  isCompleted
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: isCompleted ? const Color(0xFF15803D) : Colors.grey,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MeetingDetailPage extends StatefulWidget {
+  const _MeetingDetailPage({
+    required this.menu,
+    required this.isCompleted,
+    required this.onToggleCompleted,
+    required this.child,
+  });
+
+  final _MeetingMenu menu;
+  final bool isCompleted;
+  final VoidCallback onToggleCompleted;
+  final Widget child;
+
+  @override
+  State<_MeetingDetailPage> createState() => _MeetingDetailPageState();
+}
+
+class _MeetingDetailPageState extends State<_MeetingDetailPage> {
+  late bool _isCompleted;
+
+  @override
+  void initState() {
+    super.initState();
+    _isCompleted = widget.isCompleted;
+  }
+
+  void _toggleCompleted() {
+    setState(() {
+      _isCompleted = !_isCompleted;
+    });
+    widget.onToggleCompleted();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        widget.child,
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 16 + MediaQuery.of(context).padding.bottom,
+          child: SafeArea(
+            top: false,
+            child: Material(
+              color: Colors.transparent,
+              child: FilledButton.icon(
+                onPressed: _toggleCompleted,
+                style: FilledButton.styleFrom(
+                  backgroundColor: _isCompleted
+                      ? const Color(0xFF15803D)
+                      : widget.menu.color,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 4,
+                ),
+                icon: Icon(
+                  _isCompleted
+                      ? Icons.check_circle_rounded
+                      : Icons.check_circle_outline_rounded,
+                ),
+                label: Text(
+                  _isCompleted ? 'Materi sudah selesai' : 'Tandai selesai',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildResponsiveFields({
-    required Widget left,
-    required Widget right,
-  }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 680) {
-          return Column(
-            children: [
-              left,
-              const SizedBox(height: 14),
-              right,
-            ],
-          );
-        }
+class _MeetingMenu {
+  const _MeetingMenu({
+    required this.meetingNumber,
+    required this.title,
+    required this.color,
+    required this.backgroundColor,
+  });
 
-        return Row(
-          children: [
-            Expanded(child: left),
-            const SizedBox(width: 14),
-            Expanded(child: right),
-          ],
-        );
-      },
-    );
+  final int meetingNumber;
+  final String title;
+  final Color color;
+  final Color backgroundColor;
+
+  bool get isAvailable => meetingNumber >= 1 && meetingNumber <= 7;
+
+  bool matches(String query) {
+    return title.toLowerCase().contains(query) ||
+        statusLabel.toLowerCase().contains(query) ||
+        keywords.any((keyword) => keyword.toLowerCase().contains(query));
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String labelText,
-    required IconData icon,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: labelText,
-        prefixIcon: Icon(icon, color: const Color(0xFF0A66C2)),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF0A66C2), width: 1.2),
-        ),
-      ),
-    );
+  String get statusLabel {
+    return isAvailable ? 'Materi tersedia' : 'Materi belum tersedia';
+  }
+
+  List<String> get keywords {
+    return switch (meetingNumber) {
+      1 => ['flutter', 'pengenalan', 'dart', 'widget'],
+      2 => ['hello world', 'materialapp', 'scaffold', 'row', 'column'],
+      3 => ['ui', 'button', 'form', 'textfield', 'controller'],
+      4 => ['toast', 'snackbar', 'alertdialog', 'dialog'],
+      5 => ['listview', 'builder', 'separated', 'horizontal'],
+      6 => ['checkbox', 'checkboxlisttile', 'tristate'],
+      7 => ['radio', 'radiobutton', 'radiolisttile'],
+      _ => ['belum tersedia', 'placeholder'],
+    };
   }
 }

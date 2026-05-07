@@ -3,6 +3,7 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 import 'profile_data.dart';
 import 'page/beranda_page.dart';
+import 'page/profile_editor_page.dart';
 import 'page/profile_page.dart';
 
 void main() {
@@ -47,7 +48,7 @@ class _AppShellState extends State<AppShell> {
   void _saveProfile(ProfileData profile) {
     setState(() {
       _profile = profile;
-      _currentIndex = 1;
+      _currentIndex = 2;
     });
   }
 
@@ -60,16 +61,16 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      BerandaPage(
+      const BerandaPage(),
+      ProfileEditorPage(
         profile: _profile,
         onSave: _saveProfile,
         onDelete: _clearProfile,
-        onOpenProfile: () => _changeTab(1),
       ),
       ProfilePage(
         profile: _profile,
         onSave: _saveProfile,
-        onBackHome: () => _changeTab(0),
+        onBackHome: () => _changeTab(1),
       ),
     ];
 
@@ -79,9 +80,13 @@ class _AppShellState extends State<AppShell> {
         backgroundColor: const Color(0xFF0A66C2),
         foregroundColor: Colors.white,
         centerTitle: true,
-        title: const Text(
-          'Pertemuan 4',
-          style: TextStyle(
+        title: Text(
+          switch (_currentIndex) {
+            0 => 'Dashboard',
+            1 => 'Editor Profil',
+            _ => 'Profil',
+          },
+          style: const TextStyle(
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -111,6 +116,11 @@ class _AppShellState extends State<AppShell> {
             SalomonBottomBarItem(
               icon: const Icon(Icons.home_outlined),
               title: const Text('Beranda'),
+              selectedColor: const Color(0xFF0A66C2),
+            ),
+            SalomonBottomBarItem(
+              icon: const Icon(Icons.edit_document),
+              title: const Text('Editor'),
               selectedColor: const Color(0xFF0A66C2),
             ),
             SalomonBottomBarItem(

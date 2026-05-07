@@ -11,12 +11,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_46/main.dart';
 
 void main() {
-  testWidgets('App shows form profil and profil tab', (WidgetTester tester) async {
+  testWidgets('App shows dashboard, profile editor, and profile tab',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
+    expect(find.text('Dashboard'), findsOneWidget);
     expect(find.text('Beranda'), findsOneWidget);
+    expect(find.text('Editor'), findsOneWidget);
+    expect(find.text('Profil'), findsOneWidget);
+    expect(find.text('Pertemuan 1'), findsOneWidget);
+    expect(find.byIcon(Icons.grid_view_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.view_list_rounded), findsOneWidget);
+    expect(find.text('Progress Belajar'), findsOneWidget);
+    expect(find.text('0/14 selesai'), findsOneWidget);
+    expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'Pertemuan 5');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pertemuan 5'), findsWidgets);
+    expect(find.text('Pertemuan 1'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.edit_document));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editor Profil'), findsOneWidget);
     expect(find.text('Editor Profil Profesional'), findsOneWidget);
     expect(find.text('Simpan Profil'), findsOneWidget);
-    expect(find.text('Profil'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Profil'), findsWidgets);
+    expect(find.text('Lihat Detail Profil'), findsOneWidget);
   });
 }

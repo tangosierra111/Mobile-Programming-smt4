@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../profile_avatar.dart';
 import '../profile_data.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -20,7 +23,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  void _showToast(String message, {Color backgroundColor = const Color(0xFF0A66C2)}) {
+  void _showToast(String message,
+      {Color backgroundColor = const Color(0xFF0A66C2)}) {
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_SHORT,
@@ -207,32 +211,7 @@ class _ProfileHero extends StatelessWidget {
                 icon: const Icon(Icons.edit_outlined),
               ),
             ),
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x26000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: CircleAvatar(
-                backgroundColor: const Color(0xFFD7E7FF),
-                child: Text(
-                  profile.initials,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF376FD8),
-                  ),
-                ),
-              ),
-            ),
+            ProfileAvatar(profile: profile),
             const SizedBox(height: 14),
             Text(
               profile.fullName,
@@ -310,8 +289,22 @@ class _ProfileActionCard extends StatelessWidget {
     required this.onEdit,
   });
 
+  static const String _linkedInProfileUrl =
+      'https://www.linkedin.com/in/tiofan-pamor-wibowo-973166b6/';
+
   final ProfileData profile;
   final VoidCallback onEdit;
+
+  Future<void> _copyProfileLink() async {
+    await Clipboard.setData(const ClipboardData(text: _linkedInProfileUrl));
+    Fluttertoast.showToast(
+      msg: 'Link LinkedIn berhasil disalin',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: const Color(0xFF475467),
+      textColor: Colors.white,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -354,15 +347,7 @@ class _ProfileActionCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    Fluttertoast.showToast(
-                      msg: 'Konten profil siap dibagikan',
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      backgroundColor: const Color(0xFF475467),
-                      textColor: Colors.white,
-                    );
-                  },
+                  onPressed: _copyProfileLink,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF475467),
                     side: const BorderSide(color: Color(0xFFD0D5DD)),
@@ -755,10 +740,13 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _aboutController;
+  late ProfileData _draftProfile;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
+    _draftProfile = widget.profile;
     _fullNameController = TextEditingController(text: widget.profile.fullName);
     _locationController = TextEditingController(text: widget.profile.location);
     _positionController = TextEditingController(text: widget.profile.position);
@@ -767,6 +755,23 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
     _emailController = TextEditingController(text: widget.profile.email);
     _phoneController = TextEditingController(text: widget.profile.phoneNumber);
     _aboutController = TextEditingController(text: widget.profile.about);
+  }
+
+  Future<void> _pickPhoto() async {
+    final pickedImage = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1200,
+    );
+
+    if (pickedImage == null) {
+      return;
+    }
+
+    final bytes = await pickedImage.readAsBytes();
+    setState(() {
+      _draftProfile = _draftProfile.copyWith(photoBytes: bytes);
+    });
   }
 
   @override
@@ -790,6 +795,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
       email: _emailController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
       about: _aboutController.text.trim(),
+      photoBytes: _draftProfile.photoBytes,
     );
 
     if (updated.fullName.isEmpty ||
@@ -855,6 +861,25 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
                   style: TextStyle(
                     color: Color(0xFF667085),
                     height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Center(
+                  child: Column(
+                    children: [
+                      ProfileAvatar(
+                        profile: _draftProfile,
+                        size: 108,
+                        onTap: _pickPhoto,
+                        showEditBadge: true,
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _pickPhoto,
+                        icon: const Icon(Icons.photo_camera_outlined),
+                        label: const Text('Ganti Foto'),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -1014,7 +1039,7 @@ class _EmptyProfileState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Isi form di halaman beranda terlebih dahulu agar detail profil bisa ditampilkan di sini.',
+                'Isi form di menu editor terlebih dahulu agar detail profil bisa ditampilkan di sini.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF667085),
@@ -1029,7 +1054,7 @@ class _EmptyProfileState extends StatelessWidget {
                   foregroundColor: Colors.white,
                 ),
                 icon: const Icon(Icons.arrow_back_outlined),
-                label: const Text('Kembali ke Beranda'),
+                label: const Text('Kembali ke Editor'),
               ),
             ],
           ),

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class ProfileData {
   const ProfileData({
     required this.fullName,
@@ -10,7 +12,10 @@ class ProfileData {
     required this.projects,
     required this.followers,
     required this.experienceLabel,
+    required this.photoBytes,
   });
+
+  static const String defaultPhotoAsset = 'assets/images/default_profile.png';
 
   final String fullName;
   final String location;
@@ -22,6 +27,7 @@ class ProfileData {
   final String projects;
   final String followers;
   final String experienceLabel;
+  final Uint8List? photoBytes;
 
   static const ProfileData initial = ProfileData(
     fullName: 'Tiofan Pamor Wibowo',
@@ -35,6 +41,7 @@ class ProfileData {
     projects: '21',
     followers: '5000',
     experienceLabel: '9Y',
+    photoBytes: null,
   );
 
   static const ProfileData empty = ProfileData(
@@ -48,6 +55,7 @@ class ProfileData {
     projects: '0',
     followers: '0',
     experienceLabel: '0Y',
+    photoBytes: null,
   );
 
   bool get isEmpty =>
@@ -89,6 +97,7 @@ class ProfileData {
     String? projects,
     String? followers,
     String? experienceLabel,
+    Uint8List? photoBytes,
   }) {
     return ProfileData(
       fullName: fullName ?? this.fullName,
@@ -101,6 +110,7 @@ class ProfileData {
       projects: projects ?? this.projects,
       followers: followers ?? this.followers,
       experienceLabel: experienceLabel ?? this.experienceLabel,
+      photoBytes: photoBytes ?? this.photoBytes,
     );
   }
 }
