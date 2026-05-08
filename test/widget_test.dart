@@ -23,8 +23,24 @@ void main() {
     expect(find.byIcon(Icons.grid_view_rounded), findsOneWidget);
     expect(find.byIcon(Icons.view_list_rounded), findsOneWidget);
     expect(find.text('Progress Belajar'), findsOneWidget);
-    expect(find.text('0/14 selesai'), findsOneWidget);
+    expect(find.text('0/16 selesai'), findsOneWidget);
     expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'UTS');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ujian Tengah Semester (UTS)'), findsOneWidget);
+    expect(find.text('Pertemuan 1'), findsNothing);
+
+    await tester.tap(find.text('Ujian Tengah Semester (UTS)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ruang / Kode Kelas'), findsOneWidget);
+    expect(find.text('V.925/04SIFE008'), findsOneWidget);
+    expect(find.text('Sabtu, 9 April 2026'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).first, 'Pertemuan 5');
     await tester.pumpAndSettle();

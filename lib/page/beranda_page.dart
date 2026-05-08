@@ -13,6 +13,8 @@ import '../pertemuan/pertemuan5.dart';
 import '../pertemuan/pertemuan6.dart';
 import '../pertemuan/pertemuan7.dart';
 import '../pertemuan/pertemuan9.dart';
+import '../pertemuan/uas_page.dart';
+import '../pertemuan/uts_page.dart';
 
 enum _DashboardViewMode { grid, list }
 
@@ -72,6 +74,12 @@ class _BerandaPageState extends State<BerandaPage> {
       backgroundColor: Color(0xFFFFF5E5),
     ),
     _MeetingMenu(
+      meetingNumber: 0,
+      title: 'Ujian Tengah Semester (UTS)',
+      color: Color(0xFF2563EB),
+      backgroundColor: Color(0xFFEAF4FF),
+    ),
+    _MeetingMenu(
       meetingNumber: 8,
       title: 'Pertemuan 8',
       color: Color(0xFF8E24AA),
@@ -113,6 +121,12 @@ class _BerandaPageState extends State<BerandaPage> {
       color: Color(0xFF6D28D9),
       backgroundColor: Color(0xFFF3E8FF),
     ),
+    _MeetingMenu(
+      meetingNumber: 15,
+      title: 'Ujian Akhir Semester (UAS)',
+      color: Color(0xFF0F766E),
+      backgroundColor: Color(0xFFE6FFFA),
+    ),
   ];
 
   List<_MeetingMenu> get _filteredMenus {
@@ -151,12 +165,14 @@ class _BerandaPageState extends State<BerandaPage> {
       5 => const Pertemuan5Page(),
       6 => const Pertemuan6Page(),
       7 => const Pertemuan7Page(),
+      0 => const UtsPage(),
       9 => const Pertemuan9Page(),
       10 => const Pertemuan10Page(),
       11 => const Pertemuan11Page(),
       12 => const Pertemuan12Page(),
       13 => const Pertemuan13Page(),
       14 => const Pertemuan14Page(),
+      15 => const UasPage(),
       _ => null,
     };
 
@@ -462,22 +478,38 @@ class _MeetingGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-      itemCount: menus.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 18,
-        crossAxisSpacing: 18,
-        childAspectRatio: 1,
-      ),
-      itemBuilder: (context, index) {
-        final menu = menus[index];
-        return _MeetingCard(
-          menu: menu,
-          isCompleted: completedMeetings.contains(menu.meetingNumber),
-          onTap: () => onOpen(menu),
-          onToggleCompleted: () => onToggleCompleted(menu),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = switch (constraints.maxWidth) {
+          >= 1100 => 4,
+          >= 760 => 3,
+          _ => 2,
+        };
+
+        final childAspectRatio = switch (crossAxisCount) {
+          4 => 1.45,
+          3 => 1.25,
+          _ => 1.0,
+        };
+
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          itemCount: menus.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 18,
+            crossAxisSpacing: 18,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemBuilder: (context, index) {
+            final menu = menus[index];
+            return _MeetingCard(
+              menu: menu,
+              isCompleted: completedMeetings.contains(menu.meetingNumber),
+              onTap: () => onOpen(menu),
+              onToggleCompleted: () => onToggleCompleted(menu),
+            );
+          },
         );
       },
     );
@@ -552,7 +584,7 @@ class _MeetingListTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
-                  Icons.menu_book_rounded,
+                  menu.icon,
                   color: menu.color,
                   size: 30,
                 ),
@@ -574,9 +606,7 @@ class _MeetingListTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      menu.isAvailable
-                          ? 'Materi tersedia'
-                          : 'Materi belum tersedia',
+                      menu.statusLabel,
                       style: TextStyle(
                         color: menu.isAvailable
                             ? const Color(0xFF15803D)
@@ -646,7 +676,7 @@ class _MeetingCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.menu_book_rounded,
+                      menu.icon,
                       color: menu.color,
                       size: 34,
                     ),
@@ -793,7 +823,11 @@ class _MeetingMenu {
   final Color color;
   final Color backgroundColor;
 
-  bool get isAvailable => meetingNumber >= 1 && meetingNumber <= 7;
+  bool get isExam => meetingNumber == 0 || meetingNumber == 15;
+  bool get isUts => meetingNumber == 0;
+  bool get isUas => meetingNumber == 15;
+  bool get isAvailable => isUts || meetingNumber >= 1 && meetingNumber <= 7;
+  IconData get icon => isExam ? Icons.school_rounded : Icons.menu_book_rounded;
 
   bool matches(String query) {
     return title.toLowerCase().contains(query) ||
@@ -802,6 +836,14 @@ class _MeetingMenu {
   }
 
   String get statusLabel {
+    if (isUts) {
+      return 'Ujian tersedia';
+    }
+
+    if (isUas) {
+      return 'Ujian belum tersedia';
+    }
+
     return isAvailable ? 'Materi tersedia' : 'Materi belum tersedia';
   }
 
@@ -814,6 +856,8 @@ class _MeetingMenu {
       5 => ['listview', 'builder', 'separated', 'horizontal'],
       6 => ['checkbox', 'checkboxlisttile', 'tristate'],
       7 => ['radio', 'radiobutton', 'radiolisttile'],
+      0 => ['uts', 'ujian tengah semester', 'evaluasi'],
+      15 => ['uas', 'ujian akhir semester', 'evaluasi'],
       _ => ['belum tersedia', 'placeholder'],
     };
   }
