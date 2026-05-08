@@ -146,7 +146,23 @@ class _BerandaPageState extends State<BerandaPage> {
     return _completedMeetings.length / _menus.length;
   }
 
+  void _showUnavailableContentSnackBar(_MeetingMenu menu) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${menu.title} belum tersedia. Silakan hubungi dosen pengampu untuk informasi akses materi.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   void _toggleCompleted(_MeetingMenu menu) {
+    if (!menu.isAvailable) {
+      _showUnavailableContentSnackBar(menu);
+      return;
+    }
+
     setState(() {
       if (_completedMeetings.contains(menu.meetingNumber)) {
         _completedMeetings.remove(menu.meetingNumber);
@@ -192,7 +208,9 @@ class _BerandaPageState extends State<BerandaPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${menu.title} belum tersedia'),
+        content: Text(
+          '${menu.title} belum tersedia. Silakan hubungi dosen pengampu untuk informasi akses materi.',
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -663,48 +681,54 @@ class _MeetingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: menu.backgroundColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      menu.icon,
-                      color: menu.color,
-                      size: 34,
-                    ),
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: menu.backgroundColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          menu.icon,
+                          color: menu.color,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        menu.title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF111827),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isCompleted ? 'Selesai' : 'Belum selesai',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isCompleted
+                              ? const Color(0xFF15803D)
+                              : Colors.grey,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 22),
-                  Text(
-                    menu.title,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF111827),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isCompleted ? 'Selesai' : 'Belum selesai',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color:
-                          isCompleted ? const Color(0xFF15803D) : Colors.grey,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
             Positioned(
@@ -751,6 +775,8 @@ class _MeetingDetailPage extends StatefulWidget {
 }
 
 class _MeetingDetailPageState extends State<_MeetingDetailPage> {
+  final GlobalKey<ScaffoldMessengerState> _detailMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
   late bool _isCompleted;
 
   @override
@@ -760,6 +786,20 @@ class _MeetingDetailPageState extends State<_MeetingDetailPage> {
   }
 
   void _toggleCompleted() {
+    if (!widget.menu.isAvailable) {
+      _detailMessengerKey.currentState
+        ?..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '${widget.menu.title} belum tersedia. Silakan hubungi dosen pengampu untuk informasi akses materi.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      return;
+    }
+
     setState(() {
       _isCompleted = !_isCompleted;
     });
@@ -768,44 +808,59 @@ class _MeetingDetailPageState extends State<_MeetingDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        widget.child,
-        Positioned(
-          left: 16,
-          right: 16,
-          bottom: 16 + MediaQuery.of(context).padding.bottom,
-          child: SafeArea(
+    final isAvailable = widget.menu.isAvailable;
+    final buttonColor = !isAvailable
+        ? const Color(0xFF667085)
+        : _isCompleted
+            ? const Color(0xFF15803D)
+            : widget.menu.color;
+    final buttonIcon = !isAvailable
+        ? Icons.lock_clock_rounded
+        : _isCompleted
+            ? Icons.check_circle_rounded
+            : Icons.check_circle_outline_rounded;
+    final buttonLabel = !isAvailable
+        ? widget.menu.statusLabel
+        : _isCompleted
+            ? 'Materi sudah selesai'
+            : 'Tandai selesai';
+
+    return ScaffoldMessenger(
+      key: _detailMessengerKey,
+      child: Column(
+        children: [
+          Expanded(child: widget.child),
+          SafeArea(
             top: false,
-            child: Material(
-              color: Colors.transparent,
-              child: FilledButton.icon(
-                onPressed: _toggleCompleted,
-                style: FilledButton.styleFrom(
-                  backgroundColor: _isCompleted
-                      ? const Color(0xFF15803D)
-                      : widget.menu.color,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              child: Material(
+                color: Colors.transparent,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _toggleCompleted,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: buttonColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 4,
+                    ),
+                    icon: Icon(buttonIcon),
+                    label: Text(
+                      buttonLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
                   ),
-                  elevation: 4,
-                ),
-                icon: Icon(
-                  _isCompleted
-                      ? Icons.check_circle_rounded
-                      : Icons.check_circle_outline_rounded,
-                ),
-                label: Text(
-                  _isCompleted ? 'Materi sudah selesai' : 'Tandai selesai',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

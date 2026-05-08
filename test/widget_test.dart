@@ -26,6 +26,22 @@ void main() {
     expect(find.text('0/16 selesai'), findsOneWidget);
     expect(find.byIcon(Icons.search_rounded), findsOneWidget);
 
+    await tester.tap(find.byIcon(Icons.view_list_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Pertemuan 10');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pertemuan 10'), findsWidgets);
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pump();
+
+    expect(find.text('0/16 selesai'), findsOneWidget);
+    expect(
+      find.textContaining('Silakan hubungi dosen pengampu'),
+      findsOneWidget,
+    );
+
     await tester.enterText(find.byType(TextField).first, 'UTS');
     await tester.pumpAndSettle();
 
