@@ -12,6 +12,7 @@ import '../pertemuan/pertemuan4.dart';
 import '../pertemuan/pertemuan5.dart';
 import '../pertemuan/pertemuan6.dart';
 import '../pertemuan/pertemuan7.dart';
+import '../pertemuan/pertemuan8.dart';
 import '../pertemuan/pertemuan9.dart';
 import '../pertemuan/uas_page.dart';
 import '../pertemuan/uts_page.dart';
@@ -182,6 +183,7 @@ class _BerandaPageState extends State<BerandaPage> {
       6 => const Pertemuan6Page(),
       7 => const Pertemuan7Page(),
       0 => const UtsPage(),
+      8 => const Pertemuan8Page(),
       9 => const Pertemuan9Page(),
       10 => const Pertemuan10Page(),
       11 => const Pertemuan11Page(),
@@ -823,7 +825,7 @@ class _MeetingDetailPageState extends State<_MeetingDetailPage> {
         ? widget.menu.statusLabel
         : _isCompleted
             ? 'Materi sudah selesai'
-            : 'Tandai selesai';
+            : 'Tandai Selesai';
 
     return ScaffoldMessenger(
       key: _detailMessengerKey,
@@ -881,7 +883,7 @@ class _MeetingMenu {
   bool get isExam => meetingNumber == 0 || meetingNumber == 15;
   bool get isUts => meetingNumber == 0;
   bool get isUas => meetingNumber == 15;
-  bool get isAvailable => isUts || meetingNumber >= 1 && meetingNumber <= 7;
+  bool get isAvailable => isUts || meetingNumber >= 1 && meetingNumber <= 8;
   IconData get icon => isExam ? Icons.school_rounded : Icons.menu_book_rounded;
 
   bool matches(String query) {
@@ -911,6 +913,7 @@ class _MeetingMenu {
       5 => ['listview', 'builder', 'separated', 'horizontal'],
       6 => ['checkbox', 'checkboxlisttile', 'tristate'],
       7 => ['radio', 'radiobutton', 'radiolisttile'],
+      8 => ['autocomplete', 'spinner', 'dropdownbutton', 'dropdown', 'form'],
       0 => ['uts', 'ujian tengah semester', 'evaluasi'],
       15 => ['uas', 'ujian akhir semester', 'evaluasi'],
       _ => ['belum tersedia', 'placeholder'],
