@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  fluttertoast: ^8.2.12
+  fluttertoast: ^9.0.0
   image_picker: ^1.1.2
 
   # The following adds the Cupertino Icons font to your application.
@@ -40,6 +40,10 @@ dependencies:
   simple_alert_dialog: ^1.0.1
   cherry_toast: ^1.13.0
   salomon_bottom_bar: ^3.3.2
+  firebase_core: ^4.9.0
+  firebase_auth: ^6.5.1
+  google_sign_in: ^7.1.1
+  email_validator: ^3.0.0
 
 dev_dependencies:
   flutter_test:

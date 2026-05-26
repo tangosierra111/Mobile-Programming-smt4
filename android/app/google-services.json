@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "242101044487",
+    "project_id": "lms-tiofan",
+    "storage_bucket": "lms-tiofan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:242101044487:android:ce9bb1af5d65f5ae0bb1a2",
+        "android_client_info": {
+          "package_name": "com.example.app_46"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZOIdUQFpxHjJgCMxl9eWQ7lm5nZaPuF8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
