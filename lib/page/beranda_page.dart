@@ -274,9 +274,23 @@ class _BerandaPageState extends State<BerandaPage> {
                       _viewMode = selection.first;
                     });
                   },
-                  style: SegmentedButton.styleFrom(
-                    selectedBackgroundColor: const Color(0xFFEAF4FF),
-                    selectedForegroundColor: const Color(0xFF0A66C2),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.resolveWith(
+                      (states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return const Color(0xFFEAF4FF);
+                        }
+                        return Colors.white;
+                      },
+                    ),
+                    foregroundColor: MaterialStateProperty.resolveWith(
+                      (states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return const Color(0xFF0A66C2);
+                        }
+                        return const Color(0xFF667085);
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -883,7 +897,7 @@ class _MeetingMenu {
   bool get isExam => meetingNumber == 0 || meetingNumber == 15;
   bool get isUts => meetingNumber == 0;
   bool get isUas => meetingNumber == 15;
-  bool get isAvailable => isUts || meetingNumber >= 1 && meetingNumber <= 8;
+  bool get isAvailable => isUts || meetingNumber >= 1 && meetingNumber <= 10;
   IconData get icon => isExam ? Icons.school_rounded : Icons.menu_book_rounded;
 
   bool matches(String query) {
@@ -914,6 +928,8 @@ class _MeetingMenu {
       6 => ['checkbox', 'checkboxlisttile', 'tristate'],
       7 => ['radio', 'radiobutton', 'radiolisttile'],
       8 => ['autocomplete', 'spinner', 'dropdownbutton', 'dropdown', 'form'],
+      9 => ['datepicker', 'timepicker', 'date range', 'jadwal', 'booking'],
+      10 => ['firebase', 'auth', 'login', 'register', 'google sign in'],
       0 => ['uts', 'ujian tengah semester', 'evaluasi'],
       15 => ['uas', 'ujian akhir semester', 'evaluasi'],
       _ => ['belum tersedia', 'placeholder'],

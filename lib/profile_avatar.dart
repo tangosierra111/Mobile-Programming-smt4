@@ -9,12 +9,14 @@ class ProfileAvatar extends StatelessWidget {
     this.size = 96,
     this.onTap,
     this.showEditBadge = false,
+    this.imageUrl,
   });
 
   final ProfileData profile;
   final double size;
   final VoidCallback? onTap;
   final bool showEditBadge;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class ProfileAvatar extends StatelessWidget {
             child: _ProfileAvatarImage(
               profile: profile,
               size: size,
+              imageUrl: imageUrl,
             ),
           ),
         ),
@@ -80,10 +83,12 @@ class _ProfileAvatarImage extends StatelessWidget {
   const _ProfileAvatarImage({
     required this.profile,
     required this.size,
+    required this.imageUrl,
   });
 
   final ProfileData profile;
   final double size;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +96,17 @@ class _ProfileAvatarImage extends StatelessWidget {
     if (photoBytes != null) {
       return Image.memory(
         photoBytes,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _AvatarFallback(profile: profile),
+      );
+    }
+
+    final networkPhoto = imageUrl;
+    if (networkPhoto != null && networkPhoto.trim().isNotEmpty) {
+      return Image.network(
+        networkPhoto,
         width: size,
         height: size,
         fit: BoxFit.cover,

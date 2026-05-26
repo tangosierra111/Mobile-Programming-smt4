@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../profile_avatar.dart';
 import '../profile_data.dart';
@@ -11,11 +12,13 @@ class ProfilePage extends StatefulWidget {
     super.key,
     required this.profile,
     required this.onSave,
+    this.authUser,
     this.onBackHome,
   });
 
   final ProfileData profile;
   final ValueChanged<ProfileData> onSave;
+  final User? authUser;
   final VoidCallback? onBackHome;
 
   @override
@@ -62,12 +65,20 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 _ProfileHero(
                   profile: widget.profile,
+                  authUser: widget.authUser,
                   onEdit: _openEditSheet,
                   onSeeDetail: () {
                     _showToast('Profil profesional sedang ditampilkan');
                   },
                 ),
                 const SizedBox(height: 12),
+                if (widget.authUser != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: _AuthAccountCard(user: widget.authUser!),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: _ProfileActionCard(
@@ -179,11 +190,13 @@ class _ProfilePageState extends State<ProfilePage> {
 class _ProfileHero extends StatelessWidget {
   const _ProfileHero({
     required this.profile,
+    required this.authUser,
     required this.onEdit,
     required this.onSeeDetail,
   });
 
   final ProfileData profile;
+  final User? authUser;
   final VoidCallback onEdit;
   final VoidCallback onSeeDetail;
 
@@ -211,10 +224,15 @@ class _ProfileHero extends StatelessWidget {
                 icon: const Icon(Icons.edit_outlined),
               ),
             ),
-            ProfileAvatar(profile: profile),
+            ProfileAvatar(
+              profile: profile,
+              imageUrl: authUser?.photoURL,
+            ),
             const SizedBox(height: 14),
             Text(
-              profile.fullName,
+              authUser?.displayName?.trim().isNotEmpty == true
+                  ? authUser!.displayName!
+                  : profile.fullName,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 28,
@@ -224,7 +242,7 @@ class _ProfileHero extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              profile.profession,
+              authUser?.email ?? profile.profession,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
@@ -382,6 +400,50 @@ class _ProfileActionCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuthAccountCard extends StatelessWidget {
+  const _AuthAccountCard({required this.user});
+
+  final User user;
+
+  @override
+  Widget build(BuildContext context) {
+    final providerLabel = user.providerData.isEmpty
+        ? 'Firebase Auth'
+        : user.providerData
+            .map((provider) => provider.providerId)
+            .join(', ')
+            .replaceAll('google.com', 'Google')
+            .replaceAll('password', 'Email/Password');
+
+    return _SectionCard(
+      title: 'Akun Login',
+      child: Column(
+        children: [
+          _MiniContactRow(
+            icon: Icons.verified_user_outlined,
+            title: 'Status Email',
+            subtitle: user.emailVerified
+                ? 'Email sudah terverifikasi'
+                : 'Email belum diverifikasi',
+          ),
+          const Divider(height: 20),
+          _MiniContactRow(
+            icon: Icons.mail_outline,
+            title: 'Email Login',
+            subtitle: user.email ?? 'Email tidak tersedia',
+          ),
+          const Divider(height: 20),
+          _MiniContactRow(
+            icon: Icons.login_outlined,
+            title: 'Provider',
+            subtitle: providerLabel,
           ),
         ],
       ),

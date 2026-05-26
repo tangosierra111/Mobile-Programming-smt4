@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
+import 'auth/login_page.dart';
+import 'firebase_options.dart';
 import 'profile_data.dart';
 import 'page/beranda_page.dart';
 import 'page/profile_editor_page.dart';
 import 'page/profile_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -23,13 +32,81 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF3F6FB),
       ),
-      home: const AppShell(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _isLocalAdminLoggedIn = false;
+
+  void _loginLocalAdmin() {
+    setState(() {
+      _isLocalAdminLoggedIn = true;
+    });
+  }
+
+  Future<void> _logout() async {
+    if (_isLocalAdminLoggedIn) {
+      setState(() {
+        _isLocalAdminLoggedIn = false;
+      });
+      return;
+    }
+
+    await FirebaseAuth.instance.signOut();
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {
+      // Email/password users do not always initialize Google Sign-In.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLocalAdminLoggedIn) {
+      return AppShell(onLogout: _logout);
+    }
+
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = snapshot.data;
+        if (user == null) {
+          return LoginPage(onLocalAdminLogin: _loginLocalAdmin);
+        }
+
+        return AppShell(
+          authUser: user,
+          onLogout: _logout,
+        );
+      },
     );
   }
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({
+    super.key,
+    this.authUser,
+    required this.onLogout,
+  });
+
+  final User? authUser;
+  final VoidCallback onLogout;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -69,6 +146,7 @@ class _AppShellState extends State<AppShell> {
       ),
       ProfilePage(
         profile: _profile,
+        authUser: widget.authUser,
         onSave: _saveProfile,
         onBackHome: () => _changeTab(1),
       ),
@@ -90,6 +168,13 @@ class _AppShellState extends State<AppShell> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: widget.onLogout,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: IndexedStack(
         index: _currentIndex,
