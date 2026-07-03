@@ -8,10 +8,14 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'auth/login_page.dart';
 import 'core/network/api_client.dart';
 import 'firebase_options.dart';
+import 'models/auth_session.dart';
 import 'models/profile_data.dart';
+import 'page/admin_content_page.dart';
 import 'page/beranda_page.dart';
 import 'page/profile_editor_page.dart';
 import 'page/profile_page.dart';
+import 'repositories/auth_repository.dart';
+import 'repositories/content_repository.dart';
 import 'repositories/learning_repository.dart';
 
 Future<void> main() async {
@@ -124,13 +128,31 @@ class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   ProfileData _profile = ProfileData.initial;
   late final ApiClient _apiClient;
+  late final AuthRepository _authRepository;
+  late final ContentRepository _contentRepository;
   late final LearningRepository _learningRepository;
+  late Future<AuthSession?> _apiSessionFuture;
 
   @override
   void initState() {
     super.initState();
     _apiClient = ApiClient();
+    _authRepository = AuthRepository(_apiClient);
+    _contentRepository = ContentRepository(_apiClient);
     _learningRepository = LearningRepository(_apiClient);
+    _apiSessionFuture = _initializeApiSession();
+  }
+
+  Future<AuthSession?> _initializeApiSession() async {
+    final user = widget.authUser;
+    if (user == null) return null;
+    return _authRepository.sync(displayName: user.displayName);
+  }
+
+  void _retryApiSession() {
+    setState(() {
+      _apiSessionFuture = _initializeApiSession();
+    });
   }
 
   @override
@@ -160,6 +182,33 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.authUser == null) {
+      return _buildScaffold(null);
+    }
+
+    return FutureBuilder<AuthSession?>(
+      future: _apiSessionFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: _ApiConnectionError(
+              error: snapshot.error!,
+              onRetry: _retryApiSession,
+            ),
+          );
+        }
+        return _buildScaffold(snapshot.data);
+      },
+    );
+  }
+
+  Widget _buildScaffold(AuthSession? session) {
+    final canManageContent = session?.canManageContent ?? false;
     final pages = [
       BerandaPage(
         repository: widget.authUser == null ? null : _learningRepository,
@@ -175,6 +224,11 @@ class _AppShellState extends State<AppShell> {
         onSave: _saveProfile,
         onBackHome: () => _changeTab(0),
       ),
+      if (canManageContent)
+        AdminContentPage(
+          learningRepository: _learningRepository,
+          contentRepository: _contentRepository,
+        ),
     ];
 
     return Scaffold(
@@ -187,7 +241,8 @@ class _AppShellState extends State<AppShell> {
           switch (_currentIndex) {
             0 => 'Dashboard',
             1 => 'Editor Profil',
-            _ => 'Profil',
+            2 => 'Profil',
+            _ => 'Kelola Materi',
           },
           style: const TextStyle(
             fontWeight: FontWeight.w600,
@@ -201,10 +256,7 @@ class _AppShellState extends State<AppShell> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -237,6 +289,51 @@ class _AppShellState extends State<AppShell> {
               icon: const Icon(Icons.person_outline),
               title: const Text('Profil'),
               selectedColor: const Color(0xFF0A66C2),
+            ),
+            if (canManageContent)
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.dashboard_customize_outlined),
+                title: const Text('Materi'),
+                selectedColor: const Color(0xFF0A66C2),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ApiConnectionError extends StatelessWidget {
+  const _ApiConnectionError({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, size: 52, color: Colors.orange),
+            const SizedBox(height: 12),
+            const Text(
+              'Laravel API belum terhubung',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF667085)),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Coba lagi'),
             ),
           ],
         ),

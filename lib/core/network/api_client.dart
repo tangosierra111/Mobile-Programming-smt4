@@ -55,6 +55,10 @@ class ApiClient {
     );
   }
 
+  Future<dynamic> delete(String path, {bool authenticated = true}) async {
+    return _send('DELETE', path, authenticated: authenticated);
+  }
+
   Future<dynamic> _send(
     String method,
     String path, {
@@ -90,6 +94,7 @@ class ApiClient {
           headers: headers,
           body: encodedBody,
         ),
+      'DELETE' => await _httpClient.delete(uri, headers: headers),
       _ => await _httpClient.get(uri, headers: headers),
     };
 

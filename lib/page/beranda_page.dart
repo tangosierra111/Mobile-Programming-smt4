@@ -46,6 +46,7 @@ class _BerandaPageState extends State<BerandaPage> {
   late List<LearningItem> _menus;
   bool _isLoading = false;
   String? _loadError;
+  bool _usesApiData = false;
 
   @override
   void initState() {
@@ -79,12 +80,14 @@ class _BerandaPageState extends State<BerandaPage> {
       if (!mounted) return;
       setState(() {
         _menus = dashboard.items;
+        _usesApiData = true;
         _restoreCompletedItems();
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
-        _loadError = 'API belum dapat dijangkau. Data lokal tetap ditampilkan.';
+        _usesApiData = false;
+        _loadError = 'API gagal dimuat: $error Data lokal tetap ditampilkan.';
       });
     } finally {
       if (mounted) {
@@ -103,11 +106,26 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   double get _progressValue {
-    if (_menus.isEmpty) {
+    final publishedMeetingIds = _menus
+        .where((item) => !item.isExam && item.isAvailable)
+        .map((item) => item.id)
+        .toSet();
+    if (publishedMeetingIds.isEmpty) {
       return 0;
     }
+    final completed = _completedMeetings.intersection(publishedMeetingIds);
+    return completed.length / publishedMeetingIds.length;
+  }
 
-    return _completedMeetings.length / _menus.length;
+  int get _publishedMeetingCount =>
+      _menus.where((item) => !item.isExam && item.isAvailable).length;
+
+  int get _completedPublishedMeetingCount {
+    final publishedMeetingIds = _menus
+        .where((item) => !item.isExam && item.isAvailable)
+        .map((item) => item.id)
+        .toSet();
+    return _completedMeetings.intersection(publishedMeetingIds).length;
   }
 
   void _showUnavailableContentSnackBar(LearningItem menu) {
@@ -237,11 +255,11 @@ class _BerandaPageState extends State<BerandaPage> {
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Daftar Pertemuan',
                         style: TextStyle(
                           color: Color(0xFF111827),
@@ -249,14 +267,16 @@ class _BerandaPageState extends State<BerandaPage> {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Pilih materi pembelajaran yang ingin dibuka.',
                         style: TextStyle(
                           color: Color(0xFF667085),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      _DataSourceBadge(usesApi: _usesApiData),
                     ],
                   ),
                 ),
@@ -306,8 +326,8 @@ class _BerandaPageState extends State<BerandaPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: _ProgressSummary(
-              completed: _completedMeetings.length,
-              total: _menus.length,
+              completed: _completedPublishedMeetingCount,
+              total: _publishedMeetingCount,
               progressValue: _progressValue,
             ),
           ),
@@ -372,6 +392,35 @@ class _BerandaPageState extends State<BerandaPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DataSourceBadge extends StatelessWidget {
+  const _DataSourceBadge({required this.usesApi});
+
+  final bool usesApi;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground =
+        usesApi ? const Color(0xFF047857) : const Color(0xFF667085);
+    final background =
+        usesApi ? const Color(0xFFD1FAE5) : const Color(0xFFF2F4F7);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        usesApi ? 'Data Laravel API' : 'Data lokal',
+        style: TextStyle(
+          color: foreground,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

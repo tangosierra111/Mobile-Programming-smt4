@@ -128,6 +128,12 @@ class MeetingContentBlock {
       isVisible: json['is_visible'] as bool? ?? true,
     );
   }
+
+  String get apiType => switch (type) {
+        ContentBlockType.bulletList => 'bullet_list',
+        ContentBlockType.keyValue => 'key_value',
+        _ => type.name,
+      };
 }
 
 int _colorValue(String? hex) {
