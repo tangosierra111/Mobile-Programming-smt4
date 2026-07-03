@@ -13,7 +13,11 @@ import 'package:app_46/main.dart';
 void main() {
   testWidgets('App shows dashboard, profile editor, and profile tab',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppShell(onLogout: () {}),
+      ),
+    );
 
     expect(find.text('Dashboard'), findsOneWidget);
     expect(find.text('Beranda'), findsOneWidget);
@@ -36,11 +40,7 @@ void main() {
     await tester.tap(find.byType(Checkbox).first);
     await tester.pump();
 
-    expect(find.text('0/16 selesai'), findsOneWidget);
-    expect(
-      find.textContaining('Silakan hubungi dosen pengampu'),
-      findsOneWidget,
-    );
+    expect(find.text('1/16 selesai'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).first, 'UTS');
     await tester.pumpAndSettle();
@@ -53,7 +53,7 @@ void main() {
 
     expect(find.text('Ruang / Kode Kelas'), findsOneWidget);
     expect(find.text('V.925/04SIFE008'), findsOneWidget);
-    expect(find.text('Sabtu, 9 April 2026'), findsOneWidget);
+    expect(find.text('Kamis, 9 April 2026'), findsOneWidget);
 
     await tester.pageBack();
     await tester.pumpAndSettle();

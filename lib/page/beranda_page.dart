@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../data/local_learning_data.dart';
+import '../models/learning_item.dart';
+import '../models/user_meeting_progress.dart';
 import '../pertemuan/pertemuan1.dart';
 import '../pertemuan/pertemuan10.dart';
 import '../pertemuan/pertemuan11.dart';
@@ -16,11 +19,21 @@ import '../pertemuan/pertemuan8.dart';
 import '../pertemuan/pertemuan9.dart';
 import '../pertemuan/uas_page.dart';
 import '../pertemuan/uts_page.dart';
+import '../repositories/learning_repository.dart';
 
 enum _DashboardViewMode { grid, list }
 
 class BerandaPage extends StatefulWidget {
-  const BerandaPage({super.key});
+  const BerandaPage({
+    super.key,
+    this.items = localLearningItems,
+    this.repository,
+    this.courseId = 1,
+  });
+
+  final List<LearningItem> items;
+  final LearningRepository? repository;
+  final int courseId;
 
   @override
   State<BerandaPage> createState() => _BerandaPageState();
@@ -29,108 +42,58 @@ class BerandaPage extends StatefulWidget {
 class _BerandaPageState extends State<BerandaPage> {
   _DashboardViewMode _viewMode = _DashboardViewMode.grid;
   String _searchQuery = '';
-  final Set<int> _completedMeetings = {};
+  final Set<String> _completedMeetings = {};
+  late List<LearningItem> _menus;
+  bool _isLoading = false;
+  String? _loadError;
 
-  static const List<_MeetingMenu> _menus = [
-    _MeetingMenu(
-      meetingNumber: 1,
-      title: 'Pertemuan 1',
-      color: Color(0xFF0A66C2),
-      backgroundColor: Color(0xFFEAF4FF),
-    ),
-    _MeetingMenu(
-      meetingNumber: 2,
-      title: 'Pertemuan 2',
-      color: Color(0xFF7C3AED),
-      backgroundColor: Color(0xFFF3E8FF),
-    ),
-    _MeetingMenu(
-      meetingNumber: 3,
-      title: 'Pertemuan 3',
-      color: Color(0xFF0891B2),
-      backgroundColor: Color(0xFFE6F7FB),
-    ),
-    _MeetingMenu(
-      meetingNumber: 4,
-      title: 'Pertemuan 4',
-      color: Color(0xFFDC2626),
-      backgroundColor: Color(0xFFFEE2E2),
-    ),
-    _MeetingMenu(
-      meetingNumber: 5,
-      title: 'Pertemuan 5',
-      color: Color(0xFF1E88E5),
-      backgroundColor: Color(0xFFEAF4FF),
-    ),
-    _MeetingMenu(
-      meetingNumber: 6,
-      title: 'Pertemuan 6',
-      color: Color(0xFF34A853),
-      backgroundColor: Color(0xFFEAF7ED),
-    ),
-    _MeetingMenu(
-      meetingNumber: 7,
-      title: 'Pertemuan 7',
-      color: Color(0xFFF59E0B),
-      backgroundColor: Color(0xFFFFF5E5),
-    ),
-    _MeetingMenu(
-      meetingNumber: 0,
-      title: 'Ujian Tengah Semester (UTS)',
-      color: Color(0xFF2563EB),
-      backgroundColor: Color(0xFFEAF4FF),
-    ),
-    _MeetingMenu(
-      meetingNumber: 8,
-      title: 'Pertemuan 8',
-      color: Color(0xFF8E24AA),
-      backgroundColor: Color(0xFFF5EAF8),
-    ),
-    _MeetingMenu(
-      meetingNumber: 9,
-      title: 'Pertemuan 9',
-      color: Color(0xFF0F766E),
-      backgroundColor: Color(0xFFE6FFFA),
-    ),
-    _MeetingMenu(
-      meetingNumber: 10,
-      title: 'Pertemuan 10',
-      color: Color(0xFF4338CA),
-      backgroundColor: Color(0xFFEDEBFE),
-    ),
-    _MeetingMenu(
-      meetingNumber: 11,
-      title: 'Pertemuan 11',
-      color: Color(0xFFBE123C),
-      backgroundColor: Color(0xFFFFE4E6),
-    ),
-    _MeetingMenu(
-      meetingNumber: 12,
-      title: 'Pertemuan 12',
-      color: Color(0xFFB45309),
-      backgroundColor: Color(0xFFFEF3C7),
-    ),
-    _MeetingMenu(
-      meetingNumber: 13,
-      title: 'Pertemuan 13',
-      color: Color(0xFF15803D),
-      backgroundColor: Color(0xFFDCFCE7),
-    ),
-    _MeetingMenu(
-      meetingNumber: 14,
-      title: 'Pertemuan 14',
-      color: Color(0xFF6D28D9),
-      backgroundColor: Color(0xFFF3E8FF),
-    ),
-    _MeetingMenu(
-      meetingNumber: 15,
-      title: 'Ujian Akhir Semester (UAS)',
-      color: Color(0xFF0F766E),
-      backgroundColor: Color(0xFFE6FFFA),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _menus = List.of(widget.items);
+    _restoreCompletedItems();
+    if (widget.repository != null) {
+      _loadDashboard();
+    }
+  }
 
-  List<_MeetingMenu> get _filteredMenus {
+  void _restoreCompletedItems() {
+    _completedMeetings
+      ..clear()
+      ..addAll(
+        _menus
+            .where((item) => item.progress?.isCompleted == true)
+            .map((item) => item.id),
+      );
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+
+    try {
+      final dashboard =
+          await widget.repository!.fetchDashboard(widget.courseId);
+      if (!mounted) return;
+      setState(() {
+        _menus = dashboard.items;
+        _restoreCompletedItems();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = 'API belum dapat dijangkau. Data lokal tetap ditampilkan.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  List<LearningItem> get _filteredMenus {
     final query = _searchQuery.trim().toLowerCase();
     if (query.isEmpty) {
       return _menus;
@@ -147,7 +110,7 @@ class _BerandaPageState extends State<BerandaPage> {
     return _completedMeetings.length / _menus.length;
   }
 
-  void _showUnavailableContentSnackBar(_MeetingMenu menu) {
+  void _showUnavailableContentSnackBar(LearningItem menu) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -158,39 +121,69 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  void _toggleCompleted(_MeetingMenu menu) {
+  Future<void> _toggleCompleted(LearningItem menu) async {
     if (!menu.isAvailable) {
       _showUnavailableContentSnackBar(menu);
       return;
     }
 
+    final wasCompleted = _completedMeetings.contains(menu.id);
     setState(() {
-      if (_completedMeetings.contains(menu.meetingNumber)) {
-        _completedMeetings.remove(menu.meetingNumber);
+      if (wasCompleted) {
+        _completedMeetings.remove(menu.id);
       } else {
-        _completedMeetings.add(menu.meetingNumber);
+        _completedMeetings.add(menu.id);
       }
     });
+
+    final repository = widget.repository;
+    final meetingId = menu.sourceId;
+    if (repository == null || meetingId == null || menu.isExam) return;
+
+    try {
+      await repository.updateProgress(
+        meetingId: meetingId,
+        status: wasCompleted
+            ? MeetingProgressStatus.notStarted
+            : MeetingProgressStatus.completed,
+        progressPercent: wasCompleted ? 0 : 100,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        if (wasCompleted) {
+          _completedMeetings.add(menu.id);
+        } else {
+          _completedMeetings.remove(menu.id);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Progres gagal disimpan ke server.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
-  void _openMeeting(BuildContext context, _MeetingMenu menu) {
-    final Widget? page = switch (menu.meetingNumber) {
-      1 => const Pertemuan1Page(),
-      2 => const Pertemuan2Page(),
-      3 => const Pertemuan3Page(),
-      4 => const Pertemuan4Page(),
-      5 => const Pertemuan5Page(),
-      6 => const Pertemuan6Page(),
-      7 => const Pertemuan7Page(),
-      0 => const UtsPage(),
-      8 => const Pertemuan8Page(),
-      9 => const Pertemuan9Page(),
-      10 => const Pertemuan10Page(),
-      11 => const Pertemuan11Page(),
-      12 => const Pertemuan12Page(),
-      13 => const Pertemuan13Page(),
-      14 => const Pertemuan14Page(),
-      15 => const UasPage(),
+  void _openMeeting(BuildContext context, LearningItem menu) {
+    final Widget? page = switch (menu.routeKey) {
+      'meeting-1' => const Pertemuan1Page(),
+      'meeting-2' => const Pertemuan2Page(),
+      'meeting-3' => const Pertemuan3Page(),
+      'meeting-4' => const Pertemuan4Page(),
+      'meeting-5' => const Pertemuan5Page(),
+      'meeting-6' => const Pertemuan6Page(),
+      'meeting-7' => const Pertemuan7Page(),
+      'exam-uts' => const UtsPage(),
+      'meeting-8' => const Pertemuan8Page(),
+      'meeting-9' => const Pertemuan9Page(),
+      'meeting-10' => const Pertemuan10Page(),
+      'meeting-11' => const Pertemuan11Page(),
+      'meeting-12' => const Pertemuan12Page(),
+      'meeting-13' => const Pertemuan13Page(),
+      'meeting-14' => const Pertemuan14Page(),
+      'exam-uas' => const UasPage(),
       _ => null,
     };
 
@@ -199,7 +192,7 @@ class _BerandaPageState extends State<BerandaPage> {
         MaterialPageRoute(
           builder: (_) => _MeetingDetailPage(
             menu: menu,
-            isCompleted: _completedMeetings.contains(menu.meetingNumber),
+            isCompleted: _completedMeetings.contains(menu.id),
             onToggleCompleted: () => _toggleCompleted(menu),
             child: page,
           ),
@@ -226,6 +219,20 @@ class _BerandaPageState extends State<BerandaPage> {
       top: false,
       child: Column(
         children: [
+          if (_isLoading) const LinearProgressIndicator(minHeight: 2),
+          if (_loadError != null)
+            Container(
+              width: double.infinity,
+              color: const Color(0xFFFFF7ED),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                _loadError!,
+                style: const TextStyle(
+                  color: Color(0xFF9A3412),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
             child: Row(
@@ -275,17 +282,17 @@ class _BerandaPageState extends State<BerandaPage> {
                     });
                   },
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.resolveWith(
+                    backgroundColor: WidgetStateProperty.resolveWith(
                       (states) {
-                        if (states.contains(MaterialState.selected)) {
+                        if (states.contains(WidgetState.selected)) {
                           return const Color(0xFFEAF4FF);
                         }
                         return Colors.white;
                       },
                     ),
-                    foregroundColor: MaterialStateProperty.resolveWith(
+                    foregroundColor: WidgetStateProperty.resolveWith(
                       (states) {
-                        if (states.contains(MaterialState.selected)) {
+                        if (states.contains(WidgetState.selected)) {
                           return const Color(0xFF0A66C2);
                         }
                         return const Color(0xFF667085);
@@ -505,10 +512,10 @@ class _MeetingGrid extends StatelessWidget {
     required this.onToggleCompleted,
   });
 
-  final List<_MeetingMenu> menus;
-  final Set<int> completedMeetings;
-  final ValueChanged<_MeetingMenu> onOpen;
-  final ValueChanged<_MeetingMenu> onToggleCompleted;
+  final List<LearningItem> menus;
+  final Set<String> completedMeetings;
+  final ValueChanged<LearningItem> onOpen;
+  final ValueChanged<LearningItem> onToggleCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -539,7 +546,7 @@ class _MeetingGrid extends StatelessWidget {
             final menu = menus[index];
             return _MeetingCard(
               menu: menu,
-              isCompleted: completedMeetings.contains(menu.meetingNumber),
+              isCompleted: completedMeetings.contains(menu.id),
               onTap: () => onOpen(menu),
               onToggleCompleted: () => onToggleCompleted(menu),
             );
@@ -559,10 +566,10 @@ class _MeetingList extends StatelessWidget {
     required this.onToggleCompleted,
   });
 
-  final List<_MeetingMenu> menus;
-  final Set<int> completedMeetings;
-  final ValueChanged<_MeetingMenu> onOpen;
-  final ValueChanged<_MeetingMenu> onToggleCompleted;
+  final List<LearningItem> menus;
+  final Set<String> completedMeetings;
+  final ValueChanged<LearningItem> onOpen;
+  final ValueChanged<LearningItem> onToggleCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -574,7 +581,7 @@ class _MeetingList extends StatelessWidget {
         final menu = menus[index];
         return _MeetingListTile(
           menu: menu,
-          isCompleted: completedMeetings.contains(menu.meetingNumber),
+          isCompleted: completedMeetings.contains(menu.id),
           onTap: () => onOpen(menu),
           onToggleCompleted: () => onToggleCompleted(menu),
         );
@@ -591,7 +598,7 @@ class _MeetingListTile extends StatelessWidget {
     required this.onToggleCompleted,
   });
 
-  final _MeetingMenu menu;
+  final LearningItem menu;
   final bool isCompleted;
   final VoidCallback onTap;
   final VoidCallback onToggleCompleted;
@@ -680,7 +687,7 @@ class _MeetingCard extends StatelessWidget {
     required this.onToggleCompleted,
   });
 
-  final _MeetingMenu menu;
+  final LearningItem menu;
   final bool isCompleted;
   final VoidCallback onTap;
   final VoidCallback onToggleCompleted;
@@ -781,7 +788,7 @@ class _MeetingDetailPage extends StatefulWidget {
     required this.child,
   });
 
-  final _MeetingMenu menu;
+  final LearningItem menu;
   final bool isCompleted;
   final VoidCallback onToggleCompleted;
   final Widget child;
@@ -881,58 +888,8 @@ class _MeetingDetailPageState extends State<_MeetingDetailPage> {
   }
 }
 
-class _MeetingMenu {
-  const _MeetingMenu({
-    required this.meetingNumber,
-    required this.title,
-    required this.color,
-    required this.backgroundColor,
-  });
-
-  final int meetingNumber;
-  final String title;
-  final Color color;
-  final Color backgroundColor;
-
-  bool get isExam => meetingNumber == 0 || meetingNumber == 15;
-  bool get isUts => meetingNumber == 0;
-  bool get isUas => meetingNumber == 15;
-  bool get isAvailable => isUts || meetingNumber >= 1 && meetingNumber <= 10;
+extension _LearningItemPresentation on LearningItem {
+  Color get color => Color(accentColorValue);
+  Color get backgroundColor => Color(backgroundColorValue);
   IconData get icon => isExam ? Icons.school_rounded : Icons.menu_book_rounded;
-
-  bool matches(String query) {
-    return title.toLowerCase().contains(query) ||
-        statusLabel.toLowerCase().contains(query) ||
-        keywords.any((keyword) => keyword.toLowerCase().contains(query));
-  }
-
-  String get statusLabel {
-    if (isUts) {
-      return 'Ujian tersedia';
-    }
-
-    if (isUas) {
-      return 'Ujian belum tersedia';
-    }
-
-    return isAvailable ? 'Materi tersedia' : 'Materi belum tersedia';
-  }
-
-  List<String> get keywords {
-    return switch (meetingNumber) {
-      1 => ['flutter', 'pengenalan', 'dart', 'widget'],
-      2 => ['hello world', 'materialapp', 'scaffold', 'row', 'column'],
-      3 => ['ui', 'button', 'form', 'textfield', 'controller'],
-      4 => ['toast', 'snackbar', 'alertdialog', 'dialog'],
-      5 => ['listview', 'builder', 'separated', 'horizontal'],
-      6 => ['checkbox', 'checkboxlisttile', 'tristate'],
-      7 => ['radio', 'radiobutton', 'radiolisttile'],
-      8 => ['autocomplete', 'spinner', 'dropdownbutton', 'dropdown', 'form'],
-      9 => ['datepicker', 'timepicker', 'date range', 'jadwal', 'booking'],
-      10 => ['firebase', 'auth', 'login', 'register', 'google sign in'],
-      0 => ['uts', 'ujian tengah semester', 'evaluasi'],
-      15 => ['uas', 'ujian akhir semester', 'evaluasi'],
-      _ => ['belum tersedia', 'placeholder'],
-    };
-  }
 }

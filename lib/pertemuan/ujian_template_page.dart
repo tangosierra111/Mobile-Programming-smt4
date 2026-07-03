@@ -1,43 +1,32 @@
 import 'package:flutter/material.dart';
 
+import '../models/exam.dart';
+
 class UjianTemplatePage extends StatelessWidget {
   const UjianTemplatePage({
     super.key,
-    required this.title,
-    required this.leftInfo,
-    required this.rightInfo,
-    this.learningOutcome,
-    this.questions = const [],
+    required this.exam,
     this.unavailableMessage,
   });
 
-  final String title;
-  final List<ExamInfo> leftInfo;
-  final List<ExamInfo> rightInfo;
-  final String? learningOutcome;
-  final List<ExamQuestion> questions;
+  final Exam exam;
   final String? unavailableMessage;
-
-  bool get _isContentAvailable =>
-      learningOutcome != null && questions.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
+        title: Text(exam.title),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _HeaderCard(
-            title: title,
-            leftInfo: leftInfo,
-            rightInfo: rightInfo,
+            exam: exam,
           ),
           const SizedBox(height: 16),
-          if (_isContentAvailable) ...[
+          if (exam.isAvailable) ...[
             Card(
               color: const Color(0xFFEAF4FF),
               child: Padding(
@@ -53,21 +42,22 @@ class UjianTemplatePage extends StatelessWidget {
                           ),
                     ),
                     const SizedBox(height: 8),
-                    Text(learningOutcome!),
+                    Text(exam.learningOutcome!),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 18),
             Text(
-              'Jawablah pertanyaan ini dengan uraian yang jelas!',
+              exam.instructions ??
+                  'Jawablah pertanyaan ini dengan uraian yang jelas!',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF111827),
                   ),
             ),
             const SizedBox(height: 10),
-            for (final question in questions) ...[
+            for (final question in exam.questions) ...[
               _QuestionCard(question: question),
               const SizedBox(height: 12),
             ],
@@ -121,14 +111,27 @@ class _UnavailableExamCard extends StatelessWidget {
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
-    required this.title,
-    required this.leftInfo,
-    required this.rightInfo,
+    required this.exam,
   });
 
-  final String title;
-  final List<ExamInfo> leftInfo;
-  final List<ExamInfo> rightInfo;
+  final Exam exam;
+
+  List<_ExamInfo> get _leftInfo => [
+        _ExamInfo(label: 'Matakuliah', value: exam.course.name),
+        _ExamInfo(label: 'Program Studi', value: exam.course.studyProgram),
+        _ExamInfo(label: 'Fakultas', value: exam.course.faculty),
+        _ExamInfo(label: 'Dosen Pengampu', value: exam.course.lecturerName),
+      ];
+
+  List<_ExamInfo> get _rightInfo => [
+        _ExamInfo(label: 'Ruang / Kode Kelas', value: exam.roomAndClass),
+        _ExamInfo(label: 'Hari, Tanggal Ujian', value: exam.dateLabel),
+        _ExamInfo(label: 'Waktu Ujian', value: exam.durationLabel),
+        _ExamInfo(
+          label: 'Jenis Ujian',
+          value: exam.examKind ?? 'Belum tersedia',
+        ),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +153,7 @@ class _HeaderCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    title,
+                    exam.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF111827),
@@ -166,8 +169,8 @@ class _HeaderCard extends StatelessWidget {
               builder: (context, constraints) {
                 final useTwoColumns = constraints.maxWidth >= 720;
                 final infoColumns = [
-                  _InfoColumn(items: leftInfo),
-                  _InfoColumn(items: rightInfo),
+                  _InfoColumn(items: _leftInfo),
+                  _InfoColumn(items: _rightInfo),
                 ];
 
                 if (!useTwoColumns) {
@@ -202,7 +205,7 @@ class _HeaderCard extends StatelessWidget {
 class _InfoColumn extends StatelessWidget {
   const _InfoColumn({required this.items});
 
-  final List<ExamInfo> items;
+  final List<_ExamInfo> items;
 
   @override
   Widget build(BuildContext context) {
@@ -268,7 +271,8 @@ class _QuestionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Bobot : ${question.weight} | Waktu Maksimal : ${question.maxTime}',
+                    'Bobot : ${question.weightLabel} | '
+                    'Waktu Maksimal : ${question.maxTimeLabel}',
                     style: const TextStyle(
                       color: Color(0xFF111827),
                       fontWeight: FontWeight.w800,
@@ -284,26 +288,12 @@ class _QuestionCard extends StatelessWidget {
   }
 }
 
-class ExamInfo {
-  const ExamInfo({
+class _ExamInfo {
+  const _ExamInfo({
     required this.label,
     required this.value,
   });
 
   final String label;
   final String value;
-}
-
-class ExamQuestion {
-  const ExamQuestion({
-    required this.number,
-    required this.question,
-    required this.weight,
-    required this.maxTime,
-  });
-
-  final int number;
-  final String question;
-  final String weight;
-  final String maxTime;
 }

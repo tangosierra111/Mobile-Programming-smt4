@@ -13,10 +13,14 @@ class ProfileData {
     required this.followers,
     required this.experienceLabel,
     required this.photoBytes,
+    this.userId,
+    this.photoUrl,
+    this.linkedinUrl,
   });
 
   static const String defaultPhotoAsset = 'assets/images/default_profile.png';
 
+  final int? userId;
   final String fullName;
   final String location;
   final String position;
@@ -27,6 +31,8 @@ class ProfileData {
   final String projects;
   final String followers;
   final String experienceLabel;
+  final String? photoUrl;
+  final String? linkedinUrl;
   final Uint8List? photoBytes;
 
   static const ProfileData initial = ProfileData(
@@ -74,19 +80,54 @@ class ProfileData {
         .where((part) => part.isNotEmpty)
         .toList();
 
-    if (parts.isEmpty) {
-      return 'P';
-    }
-
+    if (parts.isEmpty) return 'P';
     if (parts.length == 1) {
       return parts.first.substring(0, 1).toUpperCase();
     }
-
     return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
         .toUpperCase();
   }
 
+  factory ProfileData.fromJson(Map<String, dynamic> json) {
+    final experience = (json['experience_years'] as num?)?.toInt() ?? 0;
+    return ProfileData(
+      userId: (json['user_id'] as num?)?.toInt(),
+      fullName: json['full_name'] as String? ?? '',
+      location: json['location'] as String? ?? '',
+      position: json['position'] as String? ?? '',
+      profession: json['profession'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      phoneNumber: json['phone_number'] as String? ?? '',
+      about: json['about'] as String? ?? '',
+      projects: '${(json['projects_count'] as num?)?.toInt() ?? 0}',
+      followers: '${(json['followers_count'] as num?)?.toInt() ?? 0}',
+      experienceLabel: '${experience}Y',
+      photoUrl: json['photo_url'] as String?,
+      linkedinUrl: json['linkedin_url'] as String?,
+      photoBytes: null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'user_id': userId,
+        'full_name': fullName,
+        'location': location,
+        'position': position,
+        'profession': profession,
+        'email': email,
+        'phone_number': phoneNumber,
+        'about': about,
+        'photo_url': photoUrl,
+        'projects_count': int.tryParse(projects) ?? 0,
+        'followers_count': int.tryParse(followers) ?? 0,
+        'experience_years':
+            int.tryParse(experienceLabel.replaceAll(RegExp(r'[^0-9]'), '')) ??
+                0,
+        'linkedin_url': linkedinUrl,
+      };
+
   ProfileData copyWith({
+    int? userId,
     String? fullName,
     String? location,
     String? position,
@@ -97,9 +138,12 @@ class ProfileData {
     String? projects,
     String? followers,
     String? experienceLabel,
+    String? photoUrl,
+    String? linkedinUrl,
     Uint8List? photoBytes,
   }) {
     return ProfileData(
+      userId: userId ?? this.userId,
       fullName: fullName ?? this.fullName,
       location: location ?? this.location,
       position: position ?? this.position,
@@ -110,6 +154,8 @@ class ProfileData {
       projects: projects ?? this.projects,
       followers: followers ?? this.followers,
       experienceLabel: experienceLabel ?? this.experienceLabel,
+      photoUrl: photoUrl ?? this.photoUrl,
+      linkedinUrl: linkedinUrl ?? this.linkedinUrl,
       photoBytes: photoBytes ?? this.photoBytes,
     );
   }

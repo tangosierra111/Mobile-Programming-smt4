@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'profile_data.dart';
+import 'models/profile_data.dart';
 
 class ProfileAvatar extends StatelessWidget {
   const ProfileAvatar({

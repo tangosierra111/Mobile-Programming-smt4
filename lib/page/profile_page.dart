@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../profile_avatar.dart';
-import '../profile_data.dart';
+import '../models/profile_data.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({

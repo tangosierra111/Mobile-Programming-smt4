@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../profile_avatar.dart';
-import '../profile_data.dart';
+import '../models/profile_data.dart';
 
 class ProfileEditorPage extends StatefulWidget {
   const ProfileEditorPage({

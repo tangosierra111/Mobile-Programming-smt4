@@ -615,7 +615,7 @@ class _DropdownField extends StatelessWidget {
         _FieldLabel(label: label, icon: icon),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           hint: Text(hint),
           isExpanded: true,
           icon: const Icon(

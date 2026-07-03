@@ -60,19 +60,28 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        _showMessage('Login Google dibatalkan.', isError: true);
-        return;
+      final googleSignIn = GoogleSignIn.instance;
+      if (!googleSignIn.supportsAuthenticate()) {
+        throw UnsupportedError(
+          'Platform ini memerlukan tombol Google Sign-In khusus.',
+        );
       }
 
-      final googleAuth = await googleUser.authentication;
+      final googleUser = await googleSignIn.authenticate();
+      final googleAuth = googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       await _auth.signInWithCredential(credential);
+    } on GoogleSignInException catch (error) {
+      final message = switch (error.code) {
+        GoogleSignInExceptionCode.canceled ||
+        GoogleSignInExceptionCode.interrupted =>
+          'Login Google dibatalkan.',
+        _ => 'Login Google belum berhasil: ${error.description ?? error.code}',
+      };
+      _showMessage(message, isError: true);
     } on FirebaseAuthException catch (error) {
       _showMessage(_authErrorMessage(error), isError: true);
     } catch (error) {

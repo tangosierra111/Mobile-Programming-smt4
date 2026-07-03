@@ -226,32 +226,34 @@ class _Pertemuan7PageState extends State<Pertemuan7Page> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RadioListTile<String>(
-                    value: 'Mahasiswa',
+                  RadioGroup<String>(
                     groupValue: _selectedCategory,
-                    activeColor: const Color(0xFFF59E0B),
-                    title: const Text('Mahasiswa'),
-                    subtitle: const Text('Contoh pilihan kategori pengguna.'),
                     onChanged: (value) {
                       setState(() {
                         _selectedCategory = value ?? _selectedCategory;
                       });
                     },
-                  ),
-                  const Divider(height: 1),
-                  RadioListTile<String>(
-                    value: 'Dosen',
-                    groupValue: _selectedCategory,
-                    activeColor: const Color(0xFFF59E0B),
-                    title: const Text('Dosen'),
-                    subtitle: const Text(
-                      'RadioListTile dapat dipilih lewat seluruh baris.',
+                    child: const Column(
+                      children: [
+                        RadioListTile<String>(
+                          value: 'Mahasiswa',
+                          activeColor: Color(0xFFF59E0B),
+                          title: Text('Mahasiswa'),
+                          subtitle: Text(
+                            'Contoh pilihan kategori pengguna.',
+                          ),
+                        ),
+                        Divider(height: 1),
+                        RadioListTile<String>(
+                          value: 'Dosen',
+                          activeColor: Color(0xFFF59E0B),
+                          title: Text('Dosen'),
+                          subtitle: Text(
+                            'RadioListTile dapat dipilih lewat seluruh baris.',
+                          ),
+                        ),
+                      ],
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value ?? _selectedCategory;
-                      });
-                    },
                   ),
                   const Divider(height: 1),
                   Padding(
@@ -261,47 +263,51 @@ class _Pertemuan7PageState extends State<Pertemuan7Page> {
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, right: 4),
-                    child: Wrap(
-                      spacing: 8,
-                      children: ['S', 'M', 'L'].map((size) {
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Radio<String>(
-                              value: size,
-                              groupValue: _selectedSize,
-                              activeColor: const Color(0xFFF59E0B),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedSize = value ?? _selectedSize;
-                                });
-                              },
-                            ),
-                            Text(size),
-                          ],
-                        );
-                      }).toList(),
+                  RadioGroup<String>(
+                    groupValue: _selectedSize,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSize = value ?? _selectedSize;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4, right: 4),
+                      child: Wrap(
+                        spacing: 8,
+                        children: ['S', 'M', 'L'].map((size) {
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Radio<String>(
+                                value: size,
+                                activeColor: const Color(0xFFF59E0B),
+                              ),
+                              Text(size),
+                            ],
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                   const Divider(height: 1),
-                  RadioListTile<String>(
-                    toggleable: true,
-                    value: 'Terang',
+                  RadioGroup<String>(
                     groupValue: _selectedTheme,
-                    activeColor: const Color(0xFFF59E0B),
-                    title: const Text('Radio Toggleable'),
-                    subtitle: Text(
-                      _selectedTheme == null
-                          ? 'Status: null (tidak ada pilihan)'
-                          : 'Status: $_selectedTheme',
-                    ),
                     onChanged: (value) {
                       setState(() {
                         _selectedTheme = value;
                       });
                     },
+                    child: RadioListTile<String>(
+                      toggleable: true,
+                      value: 'Terang',
+                      activeColor: const Color(0xFFF59E0B),
+                      title: const Text('Radio Toggleable'),
+                      subtitle: Text(
+                        _selectedTheme == null
+                            ? 'Status: null (tidak ada pilihan)'
+                            : 'Status: $_selectedTheme',
+                      ),
+                    ),
                   ),
                 ],
               ),

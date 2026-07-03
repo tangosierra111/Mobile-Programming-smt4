@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 import 'auth/login_page.dart';
+import 'core/network/api_client.dart';
 import 'firebase_options.dart';
-import 'profile_data.dart';
+import 'models/profile_data.dart';
 import 'page/beranda_page.dart';
 import 'page/profile_editor_page.dart';
 import 'page/profile_page.dart';
+import 'repositories/learning_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  if (!kIsWeb) {
+    await GoogleSignIn.instance.initialize();
+  }
   runApp(const MyApp());
 }
 
@@ -62,10 +68,12 @@ class _AuthGateState extends State<AuthGate> {
     }
 
     await FirebaseAuth.instance.signOut();
-    try {
-      await GoogleSignIn().signOut();
-    } catch (_) {
-      // Email/password users do not always initialize Google Sign-In.
+    if (!kIsWeb) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (_) {
+        // Email/password users may not have an active Google session.
+      }
     }
   }
 
@@ -115,6 +123,21 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   ProfileData _profile = ProfileData.initial;
+  late final ApiClient _apiClient;
+  late final LearningRepository _learningRepository;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiClient = ApiClient();
+    _learningRepository = LearningRepository(_apiClient);
+  }
+
+  @override
+  void dispose() {
+    _apiClient.close();
+    super.dispose();
+  }
 
   void _changeTab(int index) {
     setState(() {
@@ -138,7 +161,9 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const BerandaPage(),
+      BerandaPage(
+        repository: widget.authUser == null ? null : _learningRepository,
+      ),
       ProfileEditorPage(
         profile: _profile,
         onSave: _saveProfile,
@@ -148,7 +173,7 @@ class _AppShellState extends State<AppShell> {
         profile: _profile,
         authUser: widget.authUser,
         onSave: _saveProfile,
-        onBackHome: () => _changeTab(1),
+        onBackHome: () => _changeTab(0),
       ),
     ];
 
