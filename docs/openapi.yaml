@@ -138,6 +138,69 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /meetings/{meetingId}/content-blocks:
+    post:
+      tags: [Meetings]
+      summary: Tambah blok konten (lecturer/admin)
+      operationId: createMeetingContentBlock
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockWriteRequest'
+      responses:
+        '201':
+          description: Blok konten ditambahkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlockResponse'
+        '403':
+          description: Hanya lecturer/admin yang diizinkan
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /content-blocks/{contentBlockId}:
+    parameters:
+      - name: contentBlockId
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      tags: [Meetings]
+      summary: Ubah blok konten (lecturer/admin)
+      operationId: updateMeetingContentBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockWriteRequest'
+      responses:
+        '200':
+          description: Blok konten diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlockResponse'
+        '403':
+          description: Hanya lecturer/admin yang diizinkan
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Meetings]
+      summary: Hapus blok konten (lecturer/admin)
+      operationId: deleteMeetingContentBlock
+      responses:
+        '200':
+          description: Blok konten dihapus
+        '403':
+          description: Hanya lecturer/admin yang diizinkan
+
   /profile:
     get:
       tags: [Profile]
@@ -652,6 +715,55 @@ components:
           type: integer
         is_visible:
           type: boolean
+
+    ContentBlockWriteRequest:
+      type: object
+      required:
+        - block_key
+        - block_type
+        - content_json
+        - sort_order
+        - is_visible
+      properties:
+        block_key:
+          type: string
+          maxLength: 100
+        block_type:
+          type: string
+          enum:
+            - heading
+            - paragraph
+            - bullet_list
+            - code
+            - key_value
+            - callout
+            - image
+            - demo
+        title:
+          type: [string, "null"]
+          maxLength: 191
+        content_json:
+          type: object
+          additionalProperties: true
+        sort_order:
+          type: integer
+          minimum: 0
+        is_visible:
+          type: boolean
+
+    ContentBlockResponse:
+      type: object
+      required: [success, message, data, meta]
+      properties:
+        success:
+          type: boolean
+          const: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/ContentBlock'
+        meta:
+          type: [object, "null"]
 
     ProgressUpdateRequest:
       type: object

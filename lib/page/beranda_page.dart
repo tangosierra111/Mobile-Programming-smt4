@@ -20,6 +20,8 @@ import '../pertemuan/pertemuan9.dart';
 import '../pertemuan/uas_page.dart';
 import '../pertemuan/uts_page.dart';
 import '../repositories/learning_repository.dart';
+import '../repositories/content_repository.dart';
+import 'student_meeting_page.dart';
 
 enum _DashboardViewMode { grid, list }
 
@@ -28,11 +30,13 @@ class BerandaPage extends StatefulWidget {
     super.key,
     this.items = localLearningItems,
     this.repository,
+    this.contentRepository,
     this.courseId = 1,
   });
 
   final List<LearningItem> items;
   final LearningRepository? repository;
+  final ContentRepository? contentRepository;
   final int courseId;
 
   @override
@@ -185,6 +189,24 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   void _openMeeting(BuildContext context, LearningItem menu) {
+    if (!menu.isAvailable) {
+      _showUnavailableContentSnackBar(menu);
+      return;
+    }
+
+    final contentRepository = widget.contentRepository;
+    if (!menu.isExam && contentRepository != null && menu.sourceId != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => StudentMeetingPage(
+            meetingId: menu.sourceId!,
+            repository: contentRepository,
+          ),
+        ),
+      );
+      return;
+    }
+
     final Widget? page = switch (menu.routeKey) {
       'meeting-1' => const Pertemuan1Page(),
       'meeting-2' => const Pertemuan2Page(),

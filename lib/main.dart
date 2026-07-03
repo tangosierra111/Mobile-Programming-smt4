@@ -212,6 +212,7 @@ class _AppShellState extends State<AppShell> {
     final pages = [
       BerandaPage(
         repository: widget.authUser == null ? null : _learningRepository,
+        contentRepository: widget.authUser == null ? null : _contentRepository,
       ),
       ProfileEditorPage(
         profile: _profile,

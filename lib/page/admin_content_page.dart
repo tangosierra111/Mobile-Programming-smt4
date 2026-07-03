@@ -75,11 +75,11 @@ class _AdminContentPageState extends State<AdminContentPage> {
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: CircleAvatar(
-                    backgroundColor: meeting.backgroundColor,
+                    backgroundColor: Color(meeting.backgroundColorValue),
                     child: Text(
                       '${meeting.meetingNumber}',
                       style: TextStyle(
-                        color: meeting.color,
+                        color: Color(meeting.accentColorValue),
                         fontWeight: FontWeight.w800,
                       ),
                     ),

@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\VerifyFirebaseToken;
 use App\Http\Middleware\EnsureContentManager;
+use App\Http\Middleware\VerifyFirebaseToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;

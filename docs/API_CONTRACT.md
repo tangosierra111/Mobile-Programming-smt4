@@ -29,6 +29,12 @@ Laravel memverifikasi token Firebase, kemudian mencocokkan claim `uid` dengan
 `users.firebase_uid`. Endpoint `POST /auth/sync` membuat atau memperbarui user
 Laravel setelah login Firebase berhasil.
 
+Hak akses pengelolaan konten berasal dari `users.role`:
+
+- `student`: membaca materi terbit dan hanya blok dengan `is_visible=true`.
+- `lecturer` dan `admin`: membaca seluruh blok serta membuat, mengubah, dan
+  menghapus blok konten.
+
 ## Envelope respons
 
 Respons berhasil:
@@ -65,6 +71,9 @@ Kode status yang digunakan: `200`, `201`, `204`, `400`, `401`, `403`, `404`,
 | GET | `/courses` | Daftar mata kuliah aktif |
 | GET | `/courses/{course}/dashboard` | Course, materi/ujian, dan progres pengguna |
 | GET | `/meetings/{meeting}` | Detail materi beserta content blocks |
+| POST | `/meetings/{meeting}/content-blocks` | Tambah blok (dosen/admin) |
+| PUT | `/content-blocks/{contentBlock}` | Ubah blok (dosen/admin) |
+| DELETE | `/content-blocks/{contentBlock}` | Hapus blok (dosen/admin) |
 | PUT | `/meetings/{meeting}/progress` | Simpan progres belajar pengguna |
 | GET | `/profile` | Profil pengguna aktif |
 | PUT | `/profile` | Perbarui profil |
